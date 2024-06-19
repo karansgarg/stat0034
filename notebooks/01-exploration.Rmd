@@ -1,0 +1,35 @@
+---
+title: Exploring Algorithm Performance on Different Targets
+---
+
+```{r imports}
+source('./src/algorithms.R') #Import functions for HMC algorithms
+source('./src/targets.R') # Import functions for testing different targets
+source('./src/diagnostics.R') # Import functions to perform diagnostics
+```
+
+```{r vanilla-hmc-1d-gaussian}
+test_chain <- HMC_sampler_Neal(gaussian_1d_U, grad_gaussian_1d_U,
+                               epsilon = 0.75,
+                               L = 5,
+                               current_q = 0,
+                               chain_length = 1000)
+
+plot(test_chain, type='l')
+mean(test_chain)
+sd(test_chain)
+```
+
+```{r vanilla-hmc-10d-gaussian}
+d <- 10
+test_chain <- HMC_sampler_Neal(gaussian_nd_U, grad_gaussian_nd_U,
+                               epsilon = 0.1,
+                               L = 2,
+                               current_q = rep(0, d),
+                               chain_length = 5000)
+
+plot(test_chain[,1], type='l')
+mean(test_chain[,1])
+sd(test_chain[,1])
+```
+
