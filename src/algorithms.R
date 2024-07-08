@@ -4,7 +4,7 @@
 ################################################################################
 # Imports
 ################################################################################
-library(VGAM)
+library(VGAM) # For drawing samples from Laplace distribution
 
 ################################################################################
 # Vanilla HMC function taken from Neal (2011)
@@ -158,23 +158,18 @@ HMC <- function(U, grad_U, # Potential energy and it's gradient
     # Negate momentum to get symmetric proposal
     p <- -p
     
-    # Evaluate potential and kinetic energies at start and end of trajectory
-    current_U <- U(current_q)
+    # Evaluate kinetic energies at start and end of trajectory
     current_K <- K(current_p)
-    proposed_U <- U(q)
     proposed_K <- K(p)
     
-    # Debugging print statements
-    print(current_p)
-    print(p)
-    print(current_U)
-    print(current_K)
-    print(proposed_U)
-    print(proposed_K)
+    # Evaluate potential energy at end of trajectory (and start for 1st iteration)
+    if(t==1){current_U <- U(current_q)}
+    proposed_U <- U(q)
     
     # Metropolis accept/reject step
     if(runif(1) < exp(current_U-proposed_U+current_K-proposed_K)){
       chain[t,] <- q # Accept new proposal
+      current_U <- proposed_U # Store potential energy for next iteration
     }
     else{
       chain[t,] <- current_q # Reject new proposal
