@@ -9,12 +9,30 @@ library(coda)
 ################################################################################
 # Convert chain to MCMC, with option to discard based on warmup
 ################################################################################
-make_mcmc <- function(chain, warmup){
-  # Discard portion of chain based on warmup specified
-  # Make chain an MCMC object
+make_mcmc <- function(chain, warmup=0){
+  return(mcmc(data=chain, start=warmup+1))
 }
 
 ################################################################################
-# Produce summary diagnostics of MCMC chain
+# Finite difference method to evaluate derivatives
 ################################################################################
-#results_mcmc
+finite_diff <- function(target, # Function that we are deriving
+                        grad_target, # Analytical derivative of function
+                        epsilon=0.00000001, # Epsilon to use in finite diff method
+                        eval_value=rep(0, 10)){ # Test value for function
+  differences <- rep(NA, length(eval_value))
+  deriv <- grad_target(eval_value)
+  for(i in 1:length(eval_value)){
+    val_plus <- eval_value
+    val_neg <- eval_value
+    val_plus[i] <- eval_value[i] + epsilon
+    val_neg[i] <- eval_value[i] - epsilon
+    numerical_approx <- (target(val_plus) - target(val_neg)) / (2*epsilon)
+    diff <- abs(numerical_approx - deriv[i])
+    differences[i] <- diff
+  }
+  return(differences)
+}
+
+# Tune step size in warmup 
+# Produce density plots of funnel y

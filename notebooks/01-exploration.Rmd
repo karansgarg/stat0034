@@ -6,30 +6,54 @@ title: Exploring Algorithm Performance on Different Targets
 source('./src/algorithms.R') #Import functions for HMC algorithms
 source('./src/targets.R') # Import functions for testing different targets
 source('./src/diagnostics.R') # Import functions to perform diagnostics
+
+library(tidyverse)
 ```
 
 ```{r vanilla-hmc-1d-gaussian}
-test_chain <- HMC_sampler_Neal(gaussian_1d_U, grad_gaussian_1d_U,
-                               epsilon = 0.75,
-                               L = 5,
-                               current_q = 0,
-                               chain_length = 1000)
-
-plot(test_chain, type='l')
-mean(test_chain)
-sd(test_chain)
+# test_chain <- HMC_sampler_Neal(gaussian_1d_U, grad_gaussian_1d_U,
+#                                epsilon = 0.75,
+#                                L = 5,
+#                                current_q = 0,
+#                                chain_length = 1000)
+# 
+# plot(test_chain, type='l')
+# mean(test_chain)
+# sd(test_chain)
 ```
 
 ```{r vanilla-hmc-10d-gaussian}
-d <- 10
-test_chain <- HMC_sampler_Neal(gaussian_nd_U, grad_gaussian_nd_U,
-                               epsilon = 0.1,
-                               L = 2,
-                               current_q = rep(0, d),
-                               chain_length = 5000)
+# d <- 10
+# test_chain <- HMC_sampler_Neal(gaussian_nd_U, grad_gaussian_nd_U,
+#                                epsilon = 0.1,
+#                                L = 2,
+#                                current_q = rep(0, d),
+#                                chain_length = 10000) %>% make_mcmc(warmup=5000)
+# 
+# summary(test_chain)
+# plot(test_chain)
+```
 
-plot(test_chain[,1], type='l')
-mean(test_chain[,1])
-sd(test_chain[,1])
+```{r funnel-checks}
+# Check gradient of funnel is correct using finite difference method
+finite_diff(funnel_U, funnel_grad_U, eval_value = rep(4, 2))
+
+# Sample and plot Neal's funnel samples
+samples <- funnel_sampler(n=10000, d=2)
+plot(samples[,2], samples[,1])
+```
+
+
+```{r funnel}
+# Run HMC on Neal's funnel
+chain <- HMC(funnel_U, funnel_grad_U,
+             K='gaussian',
+             current_q=c(2,0),
+             L=10,
+             epsilon_dist='exponential',
+             epsilon_params=c(rate=1),
+             chain_length=10000) %>% make_mcmc(warmup=0)
+
+plot(chain)
 ```
 
