@@ -8,7 +8,8 @@
 # Imports
 ################################################################################
 library(mvtnorm) # For drawing samples from multivariate normal
-library(posteriordb)
+library(posteriordb) # For accessing different target distributions
+library(rstan) # Has useful functions to interface with Stan (for posteriordb)
 
 ################################################################################
 # Simple 1d standard Gaussian case
@@ -29,15 +30,32 @@ library(posteriordb)
 ################################################################################
 
 # Potential energy
-# gaussian_nd_U <- function(x){
-#   return(-dmvnorm(x, log=T))
-# }
-# 
-# # Gradient of potential energy
-# grad_gaussian_nd_U <- function(x){
-#   return(c(-solve(diag(1, nrow=length(x), ncol=length(x))) %*% x))
-# }
+gaussian_nd_U <- function(x){return(-dmvnorm(x, log=T))}
+ 
+# Gradient of potential energy
+grad_gaussian_nd_U <- function(x){return(x)}
 
+################################################################################
+# Ill-conditioned Gaussian based on NUTS paper (variance sampled from Wishart)
+################################################################################
+# Set number of dimensions
+illgaussian_d <- 20
+
+# Generate covariance matrix from Wishart distribution
+set.seed(1234) # Set seed to ensure same target produced everytime
+A <- rWishart(n=1, df=illgaussian_d, Sigma=diag(illgaussian_d))
+A <- matrix(A, nrow=illgaussian_d, ncol=illgaussian_d)
+
+# Potential energy
+illgaussian_U <- function(x){return(0.5 * x %*% A %*% x)}
+
+# Gradient of potential energy
+grad_illgaussian_U <- function(x){return(c(A %*% x))}
+
+# Function to plot marginal density of first dimension
+illgaussian_d1_density <- function(x){
+  return(dnorm(x, mean=0, sd=sqrt(solve(A)[1,1])))
+}
 ################################################################################
 # Neal's funnel
 ################################################################################
@@ -75,3 +93,12 @@ funnel_sampler <- function(n=1, d=10){
   }
   return(samples)
 }
+
+# Function to plot first dimension of Neal's funnel, y ~ N(0, 9)
+funnel_y_density <- function(x){return(dnorm(x, mean=0, sd=3))}
+
+################################################################################
+# Posteriordb setup
+################################################################################
+# Connect to posteriordb database
+my_pdb <- pdb_github()

@@ -7,13 +7,6 @@
 library(coda)
 
 ################################################################################
-# Convert chain to MCMC, with option to discard based on warmup
-################################################################################
-make_mcmc <- function(chain, warmup=0){
-  return(mcmc(data=chain, start=warmup+1))
-}
-
-################################################################################
 # Finite difference method to evaluate derivatives
 ################################################################################
 finite_diff <- function(target, # Function that we are deriving
@@ -33,6 +26,3 @@ finite_diff <- function(target, # Function that we are deriving
   }
   return(differences)
 }
-
-# Tune step size in warmup 
-# Produce density plots of funnel y

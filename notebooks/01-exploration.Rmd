@@ -8,30 +8,86 @@ source('./src/targets.R') # Import functions for testing different targets
 source('./src/diagnostics.R') # Import functions to perform diagnostics
 
 library(tidyverse)
+
+# Set seed for reproducibility
+set.seed(06031953)
+
+# Print start time
+print(Sys.time())
 ```
 
-```{r vanilla-hmc-1d-gaussian}
-# test_chain <- HMC_sampler_Neal(gaussian_1d_U, grad_gaussian_1d_U,
-#                                epsilon = 0.75,
-#                                L = 5,
-#                                current_q = 0,
-#                                chain_length = 1000)
-# 
-# plot(test_chain, type='l')
-# mean(test_chain)
-# sd(test_chain)
+```{r simple-gaussian}
+# HMC on multidimensional standard Gaussian with Gaussian KE
+gaussian_hmc_k1 <- HMC_with_warmup(U=gaussian_nd_U, grad_U=grad_gaussian_nd_U,
+                                   K='gaussian', current_q=rep(0, 20), L=NULL,
+                                   epsilon=NULL, epsilon_dist='exponential',
+                                   epsilon_params=c(rate=1),
+                                   chain_length=10000, warmup_batch_length=250,
+                                   warmup_batches=20, target_a_rate=0.675,
+                                   tolerance=0.025)
+
+# HMC on multidimensional standard Gaussian with Laplace KE
+gaussian_hmc_k2 <- HMC_with_warmup(U=gaussian_nd_U, grad_U=grad_gaussian_nd_U,
+                                   K='laplace', current_q=rep(0, 20), L=NULL,
+                                   epsilon=NULL, epsilon_dist='exponential',
+                                   epsilon_params=c(rate=1),
+                                   chain_length=10000, warmup_batch_length=250,
+                                   warmup_batches=20, target_a_rate=0.675,
+                                   tolerance=0.025)
 ```
 
-```{r vanilla-hmc-10d-gaussian}
-# d <- 10
-# test_chain <- HMC_sampler_Neal(gaussian_nd_U, grad_gaussian_nd_U,
-#                                epsilon = 0.1,
-#                                L = 2,
-#                                current_q = rep(0, d),
-#                                chain_length = 10000) %>% make_mcmc(warmup=5000)
-# 
-# summary(test_chain)
-# plot(test_chain)
+```{r simple-gaussian-graphs}
+# Export samples and histograms of densities
+gaussian_hmc_k1_chain <- mcmc(gaussian_hmc_k1$chain)
+write_csv(as.data.frame(gaussian_hmc_k1$chain), file='./out/samples/gaussian_hmc_k1_chain.csv')
+png(filename="./out/graphics/gaussian_hmc_k1.png")
+hist(gaussian_hmc_k1_chain[,1], freq = F)
+curve(dnorm, from=-4, to=4, add=T)
+dev.off()
+
+gaussian_hmc_k2_chain <- mcmc(gaussian_hmc_k2$chain)
+write_csv(as.data.frame(gaussian_hmc_k2$chain), file='./out/samples/gaussian_hmc_k2_chain.csv')
+png(filename="./out/graphics/gaussian_hmc_k2.png")
+hist(gaussian_hmc_k2_chain[,1], freq = F)
+curve(dnorm, from=-4, to=4, add=T)
+dev.off()
+```
+
+```{r ill-gaussian}
+# HMC on multidimensional ill-conditioned Gaussian with Gaussian KE
+illgaussian_hmc_k1 <- HMC_with_warmup(U=illgaussian_U, grad_U=grad_illgaussian_U,
+                                   K='gaussian', current_q=rep(1, illgaussian_d), L=NULL,
+                                   epsilon=NULL, epsilon_dist='exponential',
+                                   epsilon_params=c(rate=1),
+                                   chain_length=10000, warmup_batch_length=250,
+                                   warmup_batches=20, target_a_rate=0.675,
+                                   tolerance=0.025)
+
+# HMC on multidimensional ill-conditioned Gaussian with Laplace KE
+illgaussian_hmc_k2 <- HMC_with_warmup(U=illgaussian_U, grad_U=grad_illgaussian_U,
+                                   K='laplace', current_q=rep(1, illgaussian_d), L=NULL,
+                                   epsilon=NULL, epsilon_dist='exponential',
+                                   epsilon_params=c(rate=1),
+                                   chain_length=10000, warmup_batch_length=250,
+                                   warmup_batches=20, target_a_rate=0.675,
+                                   tolerance=0.025)
+```
+
+```{r ill-gaussian-graphs}
+# Export samples and histograms of densities
+illgaussian_hmc_k1_chain <- mcmc(illgaussian_hmc_k1$chain)
+write_csv(as.data.frame(illgaussian_hmc_k1$chain), file='./out/samples/illgaussian_hmc_k1_chain.csv')
+png(filename="./out/graphics/illgaussian_hmc_k1.png")
+hist(illgaussian_hmc_k1_chain[,1], freq = F)
+curve(illgaussian_d1_density, from=-3*sqrt(solve(A)[1,1]), to=3*sqrt(solve(A)[1,1]), add=T)
+dev.off()
+
+illgaussian_hmc_k2_chain <- mcmc(gaussian_hmc_k2$chain)
+write_csv(as.data.frame(gaussian_hmc_k2$chain), file='./out/samples/illgaussian_hmc_k2_chain.csv')
+png(filename="./out/graphics/illgaussian_hmc_k2.png")
+hist(illgaussian_hmc_k2_chain[,1], freq = F)
+curve(illgaussian_d1_density, from=-3*sqrt(solve(A)[1,1]), to=3*sqrt(solve(A)[1,1]), add=T)
+dev.off()
 ```
 
 ```{r funnel-checks}
@@ -39,21 +95,177 @@ library(tidyverse)
 finite_diff(funnel_U, funnel_grad_U, eval_value = rep(4, 2))
 
 # Sample and plot Neal's funnel samples
-samples <- funnel_sampler(n=10000, d=2)
-plot(samples[,2], samples[,1])
+funnel_samples <- funnel_sampler(n=10000, d=10)
+plot(funnel_samples[,2], funnel_samples[,1])
 ```
-
 
 ```{r funnel}
-# Run HMC on Neal's funnel
-chain <- HMC(funnel_U, funnel_grad_U,
-             K='gaussian',
-             current_q=c(2,0),
-             L=10,
-             epsilon_dist='exponential',
-             epsilon_params=c(rate=1),
-             chain_length=10000) %>% make_mcmc(warmup=0)
+# HMC on standard Neal's funnel with Gaussian KE
+funnel_hmc_k1 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                   K='gaussian', current_q=rep(1, 10), L=NULL,
+                                   epsilon=NULL, epsilon_dist='exponential',
+                                   epsilon_params=c(rate=1),
+                                   chain_length=50000, warmup_batch_length=500,
+                                   warmup_batches=20, target_a_rate=0.675,
+                                   tolerance=0.025)
 
-plot(chain)
+# HMC on standard Neal's funnel with Laplace KE
+funnel_hmc_k2 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                   K='laplace', current_q=rep(1, 10), L=NULL,
+                                   epsilon=NULL, epsilon_dist='exponential',
+                                   epsilon_params=c(rate=1),
+                                   chain_length=50000, warmup_batch_length=500,
+                                   warmup_batches=20, target_a_rate=0.675,
+                                   tolerance=0.025)
 ```
 
+```{r funnel-graphs}
+# Export samples and histograms of densities
+funnel_hmc_k1_chain <- mcmc(funnel_hmc_k1$chain)
+write_csv(as.data.frame(funnel_hmc_k1$chain), file='./out/samples/funnel_hmc_k1_chain.csv')
+png(filename="./out/graphics/funnel_hmc_k1.png")
+hist(funnel_hmc_k1_chain[,1], freq = F)
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+
+funnel_hmc_k2_chain <- mcmc(funnel_hmc_k2$chain)
+write_csv(as.data.frame(funnel_hmc_k2$chain), file='./out/samples/funnel_hmc_k2_chain.csv')
+png(filename="./out/graphics/funnel_hmc_k2.png")
+hist(funnel_hmc_k2_chain[,1], freq = F)
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r funnel-different-observations}
+print(Sys.time())
+# Run both funnel versions with differing number of iterations to assess impact
+chain_lengths <- c(10000, 20000, 30000, 40000, 50000)
+for(l in chain_lengths){
+  # HMC on standard Neal's funnel with Gaussian KE
+  funnel_hmc_k1 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='gaussian', current_q=rep(1, 10), L=NULL,
+                                     epsilon=NULL, epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=l, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+  
+  # HMC on standard Neal's funnel with Laplace KE
+  funnel_hmc_k2 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='laplace', current_q=rep(1, 10), L=NULL,
+                                     epsilon=NULL, epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=l, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+  
+  # Export samples and histograms (of 1st dimension) for Gaussian KE
+  funnel_hmc_k1_chain <- mcmc(funnel_hmc_k1$chain)
+  filename <- paste0('./out/samples/funnel_hmc_k1_chain_', l, '.csv')
+  write_csv(as.data.frame(funnel_hmc_k1$chain), file=filename)
+  filename <- paste0("./out/graphics/funnel_hmc_k1_", l, ".png")
+  png(filename=filename)
+  hist(funnel_hmc_k1_chain[,1], freq = F)
+  curve(funnel_y_density, from=-10, to=10, add=T)
+  dev.off()
+  
+  # Export samples and histograms (of 1st dimension) for Gaussian KE
+  funnel_hmc_k2_chain <- mcmc(funnel_hmc_k2$chain)
+  filename <- paste0('./out/samples/funnel_hmc_k2_chain_', l, '.csv')
+  write_csv(as.data.frame(funnel_hmc_k2$chain), file=filename)
+  filename <- paste0("./out/graphics/funnel_hmc_k2_", l, ".png")
+  png(filename=filename)
+  hist(funnel_hmc_k2_chain[,1], freq = F)
+  curve(funnel_y_density, from=-10, to=10, add=T)
+  dev.off()
+}
+print(Sys.time())
+```
+
+```{r funnel-different-observations-no-warmup}
+print(Sys.time())
+# Run both funnel versions with differing number of iterations to assess impact
+chain_lengths <- c(10000, 20000, 30000, 40000, 50000)
+for(l in chain_lengths){
+  # HMC on standard Neal's funnel with Gaussian KE
+  funnel_hmc_k1_nw <- HMC(U=funnel_U, grad_U=funnel_grad_U,
+                      K='gaussian', current_q=rep(1, 10), L=NULL, L_max=1000,
+                      epsilon=NULL, epsilon_dist='exponential',
+                      epsilon_params=c(rate=1), chain_length=l)
+  
+  # HMC on standard Neal's funnel with Laplace KE
+  funnel_hmc_k2_nw <- HMC(U=funnel_U, grad_U=funnel_grad_U,
+                      K='laplace', current_q=rep(1, 10), L=NULL, L_max=1000,
+                      epsilon=NULL, epsilon_dist='exponential',
+                      epsilon_params=c(rate=1), chain_length=l)
+  
+  # Export samples and histograms (of 1st dimension) for Gaussian KE
+  funnel_hmc_k1_nw_chain <- mcmc(funnel_hmc_k1_nw$chain)
+  filename <- paste0('./out/samples/funnel_hmc_k1_nw_chain_', l, '.csv')
+  write_csv(as.data.frame(funnel_hmc_k1_nw$chain), file=filename)
+  filename <- paste0("./out/graphics/funnel_hmc_k1_nw_", l, ".png")
+  png(filename=filename)
+  hist(funnel_hmc_k1_nw_chain[,1], freq = F)
+  curve(funnel_y_density, from=-10, to=10, add=T)
+  dev.off()
+  
+  # Export samples and histograms (of 1st dimension) for Gaussian KE
+  funnel_hmc_k2_nw_chain <- mcmc(funnel_hmc_k2_nw$chain)
+  filename <- paste0('./out/samples/funnel_hmc_k2_nw_chain_', l, '.csv')
+  write_csv(as.data.frame(funnel_hmc_k2_nw$chain), file=filename)
+  filename <- paste0("./out/graphics/funnel_hmc_k2_nw_", l, ".png")
+  png(filename=filename)
+  hist(funnel_hmc_k2_nw_chain[,1], freq = F)
+  curve(funnel_y_density, from=-10, to=10, add=T)
+  dev.off()
+}
+print(Sys.time())
+```
+
+```{r funnel-different-observations-no-L-limit}
+print(Sys.time())
+# Run both funnel versions with differing number of iterations to assess impact
+chain_lengths <- c(10000)
+for(l in chain_lengths){
+  # HMC on standard Neal's funnel with Gaussian KE
+  funnel_hmc_k1_nl <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='gaussian', current_q=rep(1, 10), L=NULL,
+                                     L_max=NULL, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=l, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+  
+  # HMC on standard Neal's funnel with Laplace KE
+  funnel_hmc_k2_nl <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='laplace', current_q=rep(1, 10), L=NULL,
+                                     L_max=NULL, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=l, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+  
+  # Export samples and histograms (of 1st dimension) for Gaussian KE
+  funnel_hmc_k1_nl_chain <- mcmc(funnel_hmc_k1_nl$chain)
+  filename <- paste0('./out/samples/funnel_hmc_k1_nl_chain_', l, '.csv')
+  write_csv(as.data.frame(funnel_hmc_k1_nl$chain), file=filename)
+  filename <- paste0("./out/graphics/funnel_hmc_k1_nl_", l, ".png")
+  png(filename=filename)
+  hist(funnel_hmc_k1_nl_chain[,1], freq = F)
+  curve(funnel_y_density, from=-10, to=10, add=T)
+  dev.off()
+  
+  # Export samples and histograms (of 1st dimension) for Gaussian KE
+  funnel_hmc_k2_nl_chain <- mcmc(funnel_hmc_k2_nl$chain)
+  filename <- paste0('./out/samples/funnel_hmc_k2_nl_chain_', l, '.csv')
+  write_csv(as.data.frame(funnel_hmc_k2_nl$chain), file=filename)
+  filename <- paste0("./out/graphics/funnel_hmc_k2_nl_", l, ".png")
+  png(filename=filename)
+  hist(funnel_hmc_k2_nl_chain[,1], freq = F)
+  curve(funnel_y_density, from=-10, to=10, add=T)
+  dev.off()
+}
+print(Sys.time())
+```
