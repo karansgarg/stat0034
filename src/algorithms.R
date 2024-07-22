@@ -100,6 +100,9 @@ library(VGAM) # For drawing samples from Laplace distribution
 ################################################################################
 
 leapfrog_fixed_L <- function(q, p, grad_U, grad_K, epsilon, L){
+  # Set flag for divergence
+  divergence <- 0
+  
   # Make a half-step for momentum at the beginning
   p <- p - epsilon*grad_U(q)/2
   
@@ -121,8 +124,11 @@ leapfrog_fixed_L <- function(q, p, grad_U, grad_K, epsilon, L){
   # Negate momentum to get symmetric proposal
   p <- -p
   
+  # Indicate divergence reached if Inf/Nan value seen
+  if(any(is.na(c(q, p))) | any(is.infinite(c(q, p)))){divergence <- 1}
+  
   # Return q and p
-  return(list(q=q, p=p))
+  return(list(q=q, p=p, divergence=divergence))
 }
 
 leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
@@ -130,6 +136,7 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
   L_max_forward <- 0 # Variable for storing u-turn step number
   q_0_forward <- q # Store first q for use in checking condition
   u_turn_condition <- FALSE # Set variable for u-turn condition
+  divergence <- 0
   
   # Data structures to store q and p
   q_store <- matrix(data=q, nrow=1, ncol=length(q))
@@ -168,16 +175,20 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
        any(is.infinite(c(q, q_0_forward, p, grad_K(p))))){
       L_max_forward <- L_max_forward - 1
       u_turn_condition <- TRUE
+      divergence <- 1
       break
     }
 
     # Assess u-turn condition
+    # Break if Inf/NaN
     u_turn_grad <- (q - q_0_forward) %*% grad_K(p)
     if(is.infinite(u_turn_grad) | is.nan(u_turn_grad)){
       L_max_forward <- L_max_forward - 1
       u_turn_condition <- TRUE
+      divergence <- 1
       break
     }
+    # Stop if u-turn reached
     if(u_turn_grad < 0){u_turn_condition <- TRUE}
   }
   
@@ -223,6 +234,7 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
       if(any(is.na(c(q, q_0_backward, p, grad_K(p)))) | 
          any(is.infinite(c(q, q_0_backward, p, grad_K(p))))){
         L_max_backward <- L_max_backward - 1
+        divergence <- 1
         break
       }
     
@@ -230,6 +242,7 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
       u_turn_grad <- (q - q_0_backward) %*% grad_K(p)
       if(is.infinite(u_turn_grad) | is.nan(u_turn_grad)){
         L_max_backward <- L_max_backward - 1
+        divergence <- 1
         break
       }
       if(u_turn_grad < 0){u_turn_condition <- TRUE}
@@ -249,7 +262,8 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
   #cat('Forward L: ', L_max_forward, '\n')
   #cat('Backward L: ', L_max_backward, '\n')
   
-  return(list(q=q, p=p, prob_L=prob_L, reverse_prob_L=reverse_prob_L, N=L_max_forward))
+  return(list(q=q, p=p, prob_L=prob_L, reverse_prob_L=reverse_prob_L,
+              N=L_max_forward, divergence=divergence))
 }
 
 ################################################################################
@@ -271,6 +285,7 @@ HMC <- function(U, grad_U, # Potential energy and its gradient
   # Assign data structures for chain
   chain <- matrix(NA, nrow=chain_length, ncol=d)
   acceptance <- rep(NA, chain_length) # Boolean vector of acceptances
+  divergences <- rep(NA, chain_length) # Boolean vector indicating divergences
   if(is.null(L)){N_store <- rep(NA, chain_length)} # Store u-turn condition
   
   # Set parameters/functions for kinetic energy
@@ -308,11 +323,13 @@ HMC <- function(U, grad_U, # Potential energy and its gradient
       prob_L <- proposal_results$prob_L
       reverse_prob_L <- proposal_results$reverse_prob_L
       N_store[t] <- proposal_results$N
+      divergences[t] <- proposal_results$divergence
     }
     else{
       proposal_results <- leapfrog_fixed_L(q, p, grad_U, grad_K, epsilon, L)
       q <- proposal_results$q
       p <- proposal_results$p
+      divergences[t] <- proposal_results$divergence
     }
     
     # Evaluate kinetic energies at start and end of trajectory
@@ -343,14 +360,14 @@ HMC <- function(U, grad_U, # Potential energy and its gradient
           #cat("Rejected! M-H Failed, alpha was ", exp(current_U-proposed_U+current_K-proposed_K)*reverse_prob_L/prob_L, "\n")
         } 
       }
-      # Standard HMC M-H step if L hard-coded supplied by function call
+      # Standard HMC M-H step if L hard-coded supplied by main function call
       else if(!is.null(L)){
         if(runif(1) < exp(current_U-proposed_U+current_K-proposed_K)){
           chain[t,] <- q # Accept new proposal
           acceptance[t] <- 1
           current_U <- proposed_U # Store potential energy for next iteration
           current_q <- q # Replace current state in chain
-          #print("Accepted!")
+          #cat("Accepted! Alpha was ", exp(current_U-proposed_U+current_K-proposed_K), "\n")
         }
         else{
           chain[t,] <- current_q # Reject new proposal
@@ -366,7 +383,8 @@ HMC <- function(U, grad_U, # Potential energy and its gradient
     } 
   }
   a_rate <- mean(acceptance)
-  return(list(chain=chain, a_rate=a_rate, U_turn_length=N_store))
+  return(list(chain=chain, a_rate=a_rate, acceptance=acceptance,
+              U_turn_length=N_store, divergences=divergences))
 }
 
 ################################################################################
