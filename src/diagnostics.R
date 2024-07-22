@@ -2,7 +2,7 @@
 # Description: R file containing functions to evaluate output of MCMC algorithms
 
 ################################################################################
-# Load relevant packages
+# Imports
 ################################################################################
 library(coda)
 

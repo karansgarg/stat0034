@@ -1,16 +1,14 @@
 ---
 title: Exploring Algorithm Performance on Different Targets
+author: '23221812'
+date: "`r Sys.Date()`"
+output: pdf_document
 ---
 
 ```{r imports}
-source('./src/algorithms.R') #Import functions for HMC algorithms
-source('./src/targets.R') # Import functions for testing different targets
-source('./src/diagnostics.R') # Import functions to perform diagnostics
-
-library(tidyverse)
-
-# Set seed for reproducibility
-set.seed(06031953)
+source('./src/utils.R') # Load utils functions
+setup() # Import relevant scripts
+seed() # Set seed
 
 # Print start time
 print(Sys.time())

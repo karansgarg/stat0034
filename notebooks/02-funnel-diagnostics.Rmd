@@ -1,0 +1,16 @@
+---
+title: "Identifying What Drives the Observed Results Regarding Neal's Funnel"
+author: '23221812'
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r imports}
+source('./src/utils.R') # Load utils functions
+setup() # Import relevant scripts
+seed() # Set seed
+```
+
+```{r vanilla-hmc}
+
+```
