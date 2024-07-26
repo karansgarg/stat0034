@@ -26,3 +26,34 @@ finite_diff <- function(target, # Function that we are deriving
   }
   return(differences)
 }
+
+################################################################################
+# Collect HMC output into singular matrix
+################################################################################
+collect_data <- function(hmc_output){
+  #XXX
+}
+
+################################################################################
+# Output acceptance and divergence statistics
+################################################################################
+accept_diverge_stats <- function(hmc_output_data, accept_col=11, diverge_col=13){
+  
+  cat("Acceptance rate: ", mean(hmc_output_data[,accept_col]), "\n",
+      "Divergence rate: ", mean(hmc_output_data[,diverge_col]==1), "\n",
+      "Number of divergences: ", sum(hmc_output_data[,diverge_col]==1), "\n",
+      "Divergence conditional acceptance rate: ",
+      mean(hmc_output_data[hmc_output_data[,diverge_col]==1,accept_col]), "\n")
+}
+
+################################################################################
+# Compute rolling bias of MCMC estimates
+################################################################################
+rolling_bias <- function(samples_vector, true_mean, true_sd){
+  bias_vector <- rep(NA, length(samples_vector))
+  for(i in 1:length(samples_vector)){
+    bias_vector[i] <- mean(samples_vector[1:i])
+  }
+  bias_vector <- (bias_vector - true_mean) / true_sd
+  return(bias_vector)
+}

@@ -6,11 +6,328 @@ output: pdf_document
 ---
 
 ```{r imports}
-source('./src/utils.R') # Load utils functions
+source('/Users/karansgarg/Documents/MSc Statistics/STAT0034/Project/git/stat0034/src/utils.R') # Load utils functions
 setup() # Import relevant scripts
 seed() # Set seed
 ```
 
-```{r vanilla-hmc}
+```{r gist-warmup-k1}
+print(Sys.time())
+gist_warmup_k1 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='gaussian', current_q=rep(1, 10), L=NULL,
+                                     L_max=1000, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
 
+# Export samples and histograms (of 1st dimension) for Gaussian KE
+gist_warmup_k1_data <- cbind(gist_warmup_k1$chain, gist_warmup_k1$acceptance,
+                             gist_warmup_k1$U_turn_length, gist_warmup_k1$divergences)
+write_csv(as.data.frame(gist_warmup_k1_data), 
+          file='./out/funnel_exploration/samples/gist_warmup_k1_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/gist_warmup_k1.png')
+hist(gist_warmup_k1_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="GIST, 500k iterations, 10k warmup, Gaussian KE, no auto-reject")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
 ```
+
+```{r gist-warmup-k2}
+print(Sys.time())
+gist_warmup_k2 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='laplace', current_q=rep(1, 10), L=NULL,
+                                     L_max=1000, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Laplace KE
+gist_warmup_k2_data <- cbind(gist_warmup_k2$chain, gist_warmup_k2$acceptance,
+                             gist_warmup_k2$U_turn_length, gist_warmup_k2$divergences)
+write_csv(as.data.frame(gist_warmup_k2_data), 
+          file='./out/funnel_exploration/samples/gist_warmup_k2_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/gist_warmup_k2.png')
+hist(gist_warmup_k2_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="GIST, 500k iterations, 10k warmup, Laplace KE, no auto-reject")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r hmc-warmup-k1}
+print(Sys.time())
+hmc_warmup_k1 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='gaussian', current_q=rep(1, 10), L=100,
+                                     L_max=NULL, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Gaussian KE
+hmc_warmup_k1_data <- cbind(hmc_warmup_k1$chain, hmc_warmup_k1$acceptance,
+                            hmc_warmup_k1$divergences)
+write_csv(as.data.frame(hmc_warmup_k1_data), 
+          file='./out/funnel_exploration/samples/hmc_warmup_k1_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/hmc_warmup_k1.png')
+hist(hmc_warmup_k1_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="HMC, 500k iterations, 10k warmup, Gaussian KE")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r hmc-warmup-k2}
+print(Sys.time())
+hmc_warmup_k2 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='laplace', current_q=rep(1, 10), L=100,
+                                     L_max=NULL, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Laplace KE
+hmc_warmup_k2_data <- cbind(hmc_warmup_k2$chain, hmc_warmup_k2$acceptance,
+                            hmc_warmup_k2$divergences)
+write_csv(as.data.frame(hmc_warmup_k2_data), 
+          file='./out/funnel_exploration/samples/hmc_warmup_k2_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/hmc_warmup_k2.png')
+hist(hmc_warmup_k2_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="HMC, 500k iterations, 10k warmup, Laplace KE")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r gist-warmup-k1-autoreject}
+print(Sys.time())
+gist_warmup_k1_autoreject <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='gaussian', current_q=rep(1, 10), L=NULL,
+                                     L_max=1000, divergence_auto_reject=T, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Gaussian KE
+gist_warmup_k1_autoreject_data <- cbind(gist_warmup_k1_autoreject$chain, gist_warmup_k1_autoreject$acceptance,
+                             gist_warmup_k1_autoreject$U_turn_length, gist_warmup_k1_autoreject$divergences)
+write_csv(as.data.frame(gist_warmup_k1_autoreject_data), 
+          file='./out/funnel_exploration/samples/gist_warmup_k1_autoreject_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/gist_warmup_k1_autoreject.png')
+hist(gist_warmup_k1_autoreject_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="GIST, 500k iterations, 10k warmup, Gaussian KE, auto-reject")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r gist-warmup-k2-autoreject}
+print(Sys.time())
+gist_warmup_k2_autoreject <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='laplace', current_q=rep(1, 10), L=NULL,
+                                     L_max=1000, divergence_auto_reject=T, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Laplace KE
+gist_warmup_k2_autoreject_data <- cbind(gist_warmup_k2_autoreject$chain, gist_warmup_k2_autoreject$acceptance,
+                             gist_warmup_k2_autoreject$U_turn_length, gist_warmup_k2_autoreject$divergences)
+write_csv(as.data.frame(gist_warmup_k2_autoreject_data), 
+          file='./out/funnel_exploration/samples/gist_warmup_k2_autoreject_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/gist_warmup_k2_autoreject.png')
+hist(gist_warmup_k2_autoreject_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="GIST, 500k iterations, 10k warmup, Laplace KE, auto-reject")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r gist-warmup-k1-div1e3}
+print(Sys.time())
+gist_warmup_k1_div1e3 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='gaussian', current_q=rep(1, 10), L=NULL,
+                                     L_max=1000, stan_divergence=1000,
+                                     divergence_auto_reject=F, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Gaussian KE
+gist_warmup_k1_div1e3_data <- cbind(gist_warmup_k1_div1e3$chain, gist_warmup_k1_div1e3$acceptance,
+                             gist_warmup_k1_div1e3$U_turn_length, gist_warmup_k1_div1e3$divergences)
+write_csv(as.data.frame(gist_warmup_k1_div1e3_data), 
+          file='./out/funnel_exploration/samples/gist_warmup_k1_div1e3_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/gist_warmup_k1_div1e3.png')
+hist(gist_warmup_k1_div1e3_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="GIST, 500k iterations, 10k warmup, Gaussian KE, Div. Crit. 1e3")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r gist-warmup-k2-div1e3}
+print(Sys.time())
+gist_warmup_k2_div1e3 <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='laplace', current_q=rep(1, 10), L=NULL,
+                                     L_max=1000, stan_divergence=1000,
+                                     divergence_auto_reject=F, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Laplace KE
+gist_warmup_k2_div1e3_data <- cbind(gist_warmup_k2_div1e3$chain, gist_warmup_k2_div1e3$acceptance,
+                             gist_warmup_k2_div1e3$U_turn_length, gist_warmup_k2_div1e3$divergences)
+write_csv(as.data.frame(gist_warmup_k2_div1e3_data), 
+          file='./out/funnel_exploration/samples/gist_warmup_k2_div1e3_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/gist_warmup_k2_div1e3.png')
+hist(gist_warmup_k2_div1e3_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="GIST, 500k iterations, 10k warmup, Laplace KE, Div. Crit. 1e3")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r gist-warmup-k1-div1e3-autoreject}
+print(Sys.time())
+gist_warmup_k1_div1e3_autoreject <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='gaussian', current_q=rep(1, 10), L=NULL,
+                                     L_max=1000, stan_divergence=1000,
+                                     divergence_auto_reject=T, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Gaussian KE
+gist_warmup_k1_div1e3_autoreject_data <- cbind(gist_warmup_k1_div1e3_autoreject$chain,
+                                               gist_warmup_k1_div1e3_autoreject$acceptance,
+                                               gist_warmup_k1_div1e3_autoreject$U_turn_length,
+                                               gist_warmup_k1_div1e3_autoreject$divergences)
+write_csv(as.data.frame(gist_warmup_k1_div1e3_autoreject_data), 
+          file='./out/funnel_exploration/samples/gist_warmup_k1_div1e3_autoreject_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/gist_warmup_k1_div1e3_autoreject.png')
+hist(gist_warmup_k1_div1e3_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="GIST, 500k its, 10k warmup, Gaussian KE, Div. Crit. 1e3, autoreject")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r gist-warmup-k2-div1e3-autoreject}
+print(Sys.time())
+gist_warmup_k2_div1e3_autoreject <- HMC_with_warmup(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='laplace', current_q=rep(1, 10), L=NULL,
+                                     L_max=1000, stan_divergence=1000,
+                                     divergence_auto_reject=T, epsilon=NULL,
+                                     epsilon_dist='exponential',
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000, warmup_batch_length=500,
+                                     warmup_batches=20, target_a_rate=0.675,
+                                     tolerance=0.025)
+print(Sys.time())
+
+# Export samples and histograms (of 1st dimension) for Laplace KE
+gist_warmup_k2_div1e3_autoreject_data <- cbind(gist_warmup_k2_div1e3_autoreject$chain,
+                                               gist_warmup_k2_div1e3_autoreject$acceptance,
+                                               gist_warmup_k2_div1e3_autoreject$U_turn_length,
+                                               gist_warmup_k2_div1e3_autoreject$divergences)
+write_csv(as.data.frame(gist_warmup_k2_div1e3_autoreject_data), 
+          file='./out/funnel_exploration/samples/gist_warmup_k2_div1e3_autoreject_data.csv')
+
+png(filename='./out/funnel_exploration/graphics/gist_warmup_k2_div1e3_autoreject.png')
+hist(gist_warmup_k2_div1e3_data[,1], freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density of y",
+     main="GIST, 500k its, 10k warmup, Laplace KE, Div. Crit. 1e3, autoreject")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+
+```{r divergence-analysis}
+cat("GIST, Gaussian KE, No-auto-reject, using NaN/Inf as divergence criterion \n")
+accept_diverge_stats(gist_warmup_k1_data)
+
+cat("GIST, Laplace KE, No-auto-reject, using NaN/Inf as divergence criterion \n")
+accept_diverge_stats(gist_warmup_k2_data)
+
+cat("HMC, Gaussian KE, No-auto-reject, using NaN/Inf as divergence criterion \n")
+accept_diverge_stats(hmc_warmup_k1_data, diverge_col = 12)
+
+cat("HMC, Laplace KE, No-auto-reject, using NaN/Inf as divergence criterion \n")
+accept_diverge_stats(hmc_warmup_k2_data, diverge_col = 12)
+
+cat("GIST, Gaussian KE, Auto-reject, using NaN/Inf as divergence criterion \n")
+accept_diverge_stats(gist_warmup_k1_autoreject_data)
+
+cat("GIST, Laplace KE, Auto-reject, using NaN/Inf as divergence criterion \n")
+accept_diverge_stats(gist_warmup_k2_autoreject_data)
+
+cat("GIST, Gaussian KE, No-auto-reject, using 1e3 as divergence criterion \n")
+accept_diverge_stats(gist_warmup_k1_div1e3_data)
+
+cat("GIST, Laplace KE, No-auto-reject, using 1e3 as divergence criterion \n")
+accept_diverge_stats(gist_warmup_k2_div1e3_data)
+
+cat("GIST, Gaussian KE, Auto-reject, using 1e3 as divergence criterion \n")
+accept_diverge_stats(gist_warmup_k1_div1e3_autoreject_data)
+
+cat("GIST, Laplace KE, Auto-reject, using 1e3 as divergence criterion \n")
+accept_diverge_stats(gist_warmup_k2_div1e3_autoreject_data)
+```
+
+```{r assessing-flow-speed}
+sum(gist_warmup_k1_data[,12]==1000)
+sum(gist_warmup_k2_data[,12]==1000)
+sum(gist_warmup_k2_div1e3_data[,12]==1000)
+sum(gist_warmup_k2_div1e3_data[,12]==1000)
+sum(gist_warmup_k1_autoreject_data[,12]==1000)
+sum(gist_warmup_k2_autoreject_data[,12]==1000)
+sum(gist_warmup_k1_div1e3_autoreject_data[,12]==1000)
+sum(gist_warmup_k2_div1e3_autoreject_data[,12]==1000)
+```
+
+```{r}
+hmc_fixed_k1 <- HMC(U=funnel_U, grad_U=funnel_grad_U,
+                                     K='gaussian', current_q=rep(1, 10), L=100,
+                                     L_max=NULL, epsilon=0.03,
+                                     epsilon_dist=0,
+                                     epsilon_params=c(rate=1),
+                                     chain_length=500000)
+```
+

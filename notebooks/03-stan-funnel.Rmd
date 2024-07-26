@@ -1,0 +1,38 @@
+---
+title: "Fitting the Funnel via Stan"
+author: '23221812'
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup}
+# Set working directory to Stan subfolder
+setwd('./stan')
+
+library(rstan) # Import Stan
+options(mc.cores = parallel::detectCores()) # Run in parallel to save time
+rstan_options(auto_write = TRUE) # Automatically write model to disk
+```
+
+```{r sample-from-funnel}
+stan_fit <- stan(file='funnel.stan', iter=1005000, warmup=5000, chains=4,
+                 init=list(list1=list(y=-10, x=rep(0, 9)),
+                           list2=list(y=-8, x=rep(0, 9))))
+
+#plot(stan_fit, plotfun='stan_hist', pars=c('y'), show_density=T)
+#stan_hist(stan_fit, pars=c('y'), show_density=T)
+#curve(funnel_y_density, from=-10, to=10, add=T)
+```
+
+```{r produce-histogram}
+stan_y <- rstan::extract(stan_fit, pars=c('y'), permuted=T)
+write_csv(as.data.frame(stan_y$y), file='../out/funnel_exploration/samples/stan.csv')
+
+png(filename="../out/funnel_exploration/graphics/stan.png")
+hist(stan_y$y, freq = F, breaks=30, xlim=c(-10,10),
+     xlab="", ylab="Density",
+     main="Histogram of y samples from STAN fit of Neal's funnel")
+curve(funnel_y_density, from=-10, to=10, add=T)
+dev.off()
+```
+

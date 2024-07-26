@@ -131,7 +131,7 @@ leapfrog_fixed_L <- function(q, p, grad_U, grad_K, epsilon, L){
   return(list(q=q, p=p, divergence=divergence))
 }
 
-leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
+leapfrog_GIST <- function(q, p, U, K, grad_U, grad_K, epsilon, L_max=1000, stan_divergence=NULL){
   
   L_max_forward <- 0 # Variable for storing u-turn step number
   q_0_forward <- q # Store first q for use in checking condition
@@ -141,6 +141,9 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
   # Data structures to store q and p
   q_store <- matrix(data=q, nrow=1, ncol=length(q))
   p_store <- matrix(data=p, nrow=1, ncol=length(p))
+  
+  # Compute Hamiltonian at start to assess divergence
+  H_0 <- U(q) + K(p)
   
   while(u_turn_condition == FALSE){
     L_max_forward <- L_max_forward + 1 # Add 1 timestep to counter
@@ -165,7 +168,17 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
     #   print((q - q_0_forward) %*% grad_K(p))
     # }
     
-    # Stop early if L_max reaches 1000
+    # STAN divergence condition is when Hamiltonion has a difference > 1000
+    # Include test case for that too
+    if(!is.null(stan_divergence)){
+      H_t <- U(q) + K(p)
+      if(abs(H_t - H_0) > stan_divergence){
+        divergence <- 1
+        break
+      }
+    }
+    
+    # Stop early if L_max reaches specified limit (default is 1000)
     if(!is.null(L_max)){
       if(L_max_forward==L_max){break}
     }
@@ -210,6 +223,9 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
     u_turn_condition <- FALSE
     L_max_backward <- 0
     q_0_backward <- q
+    
+    # Compute Hamiltonian at start to assess divergence
+    H_0 <- U(q) + K(p)
   
     while(u_turn_condition == FALSE){
       L_max_backward <- L_max_backward + 1 # Add 1 timestep to counter
@@ -229,6 +245,16 @@ leapfrog_GIST <- function(q, p, grad_U, grad_K, epsilon, L_max=1000){
       #   cat("grad_K(p): ", grad_K(p), "\n")
       #   print((q - q_0_backward) %*% grad_K(p))
       # }
+      
+      # STAN divergence condition is when Hamiltonion has a difference > 1000
+      # Include test case for that too
+      if(!is.null(stan_divergence)){
+        H_t <- U(q) + K(p)
+        if(abs(H_t - H_0) > stan_divergence){
+          divergence <- 1
+          break
+        }
+      }
     
       # Catch Inf/NaN values and stop integration
       if(any(is.na(c(q, q_0_backward, p, grad_K(p)))) | 
@@ -274,6 +300,8 @@ HMC <- function(U, grad_U, # Potential energy and its gradient
                 current_q, # Starting point of chain
                 L=NULL, # Path length (defaults to GIST if null)
                 L_max=1000, # Maximum path length to limit algorithm runtime
+                stan_divergence=NULL, # Defines limit in Hamiltonian diff allowed
+                divergence_auto_reject=FALSE, # Auto-reject divergent tracjectories
                 epsilon=NULL, # Leapfrog step size (defaults to RHMC if null)
                 epsilon_dist='exponential', # Used for RHMC (only exp allowed)
                 epsilon_params=c(rate=1), # Starting value for lambda_epsilon
@@ -286,7 +314,7 @@ HMC <- function(U, grad_U, # Potential energy and its gradient
   chain <- matrix(NA, nrow=chain_length, ncol=d)
   acceptance <- rep(NA, chain_length) # Boolean vector of acceptances
   divergences <- rep(NA, chain_length) # Boolean vector indicating divergences
-  if(is.null(L)){N_store <- rep(NA, chain_length)} # Store u-turn condition
+  N_store <- rep(NA, chain_length) # Store u-turn condition
   
   # Set parameters/functions for kinetic energy
   if(K == 'gaussian'){
@@ -317,7 +345,7 @@ HMC <- function(U, grad_U, # Potential energy and its gradient
     
     # Perform leapfrog integration to get proposal q and p
     if(is.null(L)){
-      proposal_results <- leapfrog_GIST(q, p, grad_U, grad_K, epsilon, L_max)
+      proposal_results <- leapfrog_GIST(q, p, U, K, grad_U, grad_K, epsilon, L_max, stan_divergence)
       q <- proposal_results$q
       p <- proposal_results$p
       prob_L <- proposal_results$prob_L
@@ -342,6 +370,15 @@ HMC <- function(U, grad_U, # Potential energy and its gradient
     
     # Create vector of energies for Inf/NaN check
     energies <- c(current_U, proposed_U, current_K, proposed_K)
+    
+    # Automatically reject proposals from divergent trajectory if option selected
+    if(divergence_auto_reject==T){
+      if(proposal_results$divergence==1){
+        chain[t,] <- current_q # Reject new proposal
+        acceptance[t] <- 0
+        next
+      }
+    }
     
     # Check energies are valid quantities - if not we automatically reject
     if(all(is.finite(energies)) & all(!is.nan(energies))){
@@ -396,6 +433,8 @@ HMC_with_warmup <- function(U, grad_U, # Potential energy and its gradient
                         current_q, # Starting point of chain
                         L=NULL, # Path length (defaults to GIST if null)
                         L_max=1000, # Maximum path length to limit algorithm runtime
+                        stan_divergence=NULL, # Defines limit in Hamiltonian diff allowed
+                        divergence_auto_reject=FALSE, # Auto-reject divergent tracjectories
                         epsilon=NULL, # Leapfrog step size (defaults to RHMC if null)
                         epsilon_dist='exponential', # Used for RHMC (only exp allowed)
                         epsilon_params=c(rate=1), # Starting value for lambda_epsilon
@@ -417,7 +456,9 @@ HMC_with_warmup <- function(U, grad_U, # Potential energy and its gradient
   # Run warmup batches to tune parameters for epsilon
   for(i in 1:warmup_batches){
     results <- HMC(U=U, grad_U=grad_U, K=K, current_q=q, 
-                   L=L, L_max=L_max, epsilon=epsilon, epsilon_dist=epsilon_dist,
+                   L=L, L_max=L_max, divergence_auto_reject=divergence_auto_reject,
+                   stan_divergence=stan_divergence, epsilon=epsilon, 
+                   epsilon_dist=epsilon_dist,
                    epsilon_params=epsilon_params, chain_length=warmup_batch_length)
     if(epsilon_dist=='exponential'){
       if(results$a_rate - target_a_rate < -tolerance){
@@ -446,7 +487,9 @@ HMC_with_warmup <- function(U, grad_U, # Potential energy and its gradient
   
   # Run HMC with tuned parameters for epsilon
   results <- HMC(U=U, grad_U=grad_U, K=K, current_q=q, 
-                 L=L, L_max=L_max, epsilon=epsilon, epsilon_dist=epsilon_dist,
+                 L=L, L_max=L_max, divergence_auto_reject=divergence_auto_reject,
+                 stan_divergence=stan_divergence, epsilon=epsilon, 
+                 epsilon_dist=epsilon_dist,
                  epsilon_params=epsilon_params, chain_length=chain_length)
   
   return(results)
