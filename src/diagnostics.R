@@ -4,7 +4,7 @@
 ################################################################################
 # Imports
 ################################################################################
-library(coda)
+#library(coda)
 
 ################################################################################
 # Finite difference method to evaluate derivatives
@@ -13,8 +13,14 @@ finite_diff <- function(target, # Function that we are deriving
                         grad_target, # Analytical derivative of function
                         epsilon=0.00000001, # Epsilon to use in finite diff method
                         eval_value=rep(0, 10)){ # Test value for function
+  # Vector to store differences
   differences <- rep(NA, length(eval_value))
+  
+  # Gradient vector according to supplied function
   deriv <- grad_target(eval_value)
+  
+  # For each dimension numerically approximate gradient to compute gradient vector
+  # And then compare against supplied function to get a difference
   for(i in 1:length(eval_value)){
     val_plus <- eval_value
     val_neg <- eval_value
@@ -24,6 +30,7 @@ finite_diff <- function(target, # Function that we are deriving
     diff <- abs(numerical_approx - deriv[i])
     differences[i] <- diff
   }
+  # Return vector of differences
   return(differences)
 }
 
@@ -31,19 +38,45 @@ finite_diff <- function(target, # Function that we are deriving
 # Collect HMC output into singular matrix
 ################################################################################
 collect_data <- function(hmc_output){
-  #XXX
+  
+  # Store output into single matrix
+  data <- cbind(hmc_output$chain,
+                hmc_output$acceptance,
+                hmc_output$divergence)
+  # Add U-turn-length if GIST sampler used
+  if(any(!is.na(hmc_output$U_turn_length))){
+    data <- cbind(data, hmc_output$U_turn_length)
+  }
+  
+  # Extract dimension of target distribution
+  d <- ncol(hmc_output$chain)
+  
+  # Name columns
+  for(i in 1:d){
+    name <- paste0("dim", i)
+    colnames(data)[i] <- name
+  }
+  colnames(data)[d+1] <- "acceptance"
+  colnames(data[d+2] <- "divergence")
+  # Add U-turn-length if GIST sampler used
+  if(any(!is.na(hmc_output$U_turn_length))){
+    colnames(data)[d+3] <- "U_turn_length"
+  }
+  
+  return(data)
 }
 
 ################################################################################
 # Output acceptance and divergence statistics
 ################################################################################
-accept_diverge_stats <- function(hmc_output_data, accept_col=11, diverge_col=13){
+accept_diverge_stats <- function(hmc_output_data){
   
-  cat("Acceptance rate: ", mean(hmc_output_data[,accept_col]), "\n",
-      "Divergence rate: ", mean(hmc_output_data[,diverge_col]==1), "\n",
-      "Number of divergences: ", sum(hmc_output_data[,diverge_col]==1), "\n",
+  # Calculate and print acceptance and divergence rates
+  cat("Acceptance rate: ", mean(hmc_output_data[,"acceptance"]), "\n",
+      "Divergence rate: ", mean(hmc_output_data[,"divergence"]==1), "\n",
+      "Number of divergences: ", sum(hmc_output_data[,"divergence"]==1), "\n",
       "Divergence conditional acceptance rate: ",
-      mean(hmc_output_data[hmc_output_data[,diverge_col]==1,accept_col]), "\n")
+      mean(hmc_output_data[hmc_output_data[,"divergence"]==1,"acceptance"]), "\n")
 }
 
 ################################################################################
@@ -54,6 +87,10 @@ rolling_bias <- function(samples_vector, true_mean, true_sd){
   for(i in 1:length(samples_vector)){
     bias_vector[i] <- mean(samples_vector[1:i])
   }
-  bias_vector <- (bias_vector - true_mean) / true_sd
+  bias_vector <- abs(bias_vector - true_mean) / true_sd
   return(bias_vector)
 }
+
+################################################################################
+# Plot rolling bias
+################################################################################

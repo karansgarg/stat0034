@@ -26,7 +26,7 @@ library(rstan) # Has useful functions to interface with Stan (for posteriordb)
 # }
 
 ################################################################################
-# 10-d standard Gaussian case
+# N-d standard Gaussian case
 ################################################################################
 
 # Potential energy
