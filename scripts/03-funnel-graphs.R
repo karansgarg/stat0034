@@ -58,7 +58,7 @@ dev.off()
 
 # NUTS/Stan
 png(filename='./out/graphics/rolling_bias/stan.png')
-plot(stan_rolling_bias, type='l', xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators', ylim=c(0, 4),
+plot(stan_rolling_bias, type='l', xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators', ylim=c(0, 3),
      cex.axis = 1.3, cex.lab = 1.3)
 lines(stan_rolling_bias_sq, col='blue')
 legend('topright', legend=c('f(y)=y', as.expression('f(y)='~y^2)), col=c('black', 'blue'), pch=16, cex=1.5)
