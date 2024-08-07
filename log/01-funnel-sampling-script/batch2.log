@@ -1,0 +1,48 @@
+Starting warmup at: [1] "2024-08-03 17:25:14 BST"
+Starting lambda for epsilon:  1 
+Final lambda for epsilon:  38.3376 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:25:17 BST"
+Final chain complete at time: [1] "2024-08-03 17:27:12 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 17:27:12 BST"
+Starting lambda for epsilon:  1 
+Final lambda for epsilon:  38.3376 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:27:14 BST"
+Final chain complete at time: [1] "2024-08-03 17:29:12 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 17:29:12 BST"
+Starting lambda for epsilon:  1 
+Final lambda for epsilon:  38.3376 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:29:14 BST"
+Final chain complete at time: [1] "2024-08-03 17:31:15 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 17:31:15 BST"
+Starting lambda for epsilon:  1 
+Final lambda for epsilon:  38.3376 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:31:18 BST"
+Final chain complete at time: [1] "2024-08-03 17:33:23 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 17:33:23 BST"
+Starting lambda for epsilon:  1 
+Final lambda for epsilon:  38.3376 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:33:26 BST"
+Final chain complete at time: [1] "2024-08-03 17:35:50 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 17:35:50 BST"
+Starting lambda for epsilon:  1 
+Final lambda for epsilon:  38.3376 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:35:53 BST"
+Final chain complete at time: [1] "2024-08-03 17:38:09 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 17:38:09 BST"
+Starting lambda for epsilon:  1 
+Final lambda for epsilon:  38.3376 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:38:12 BST"
+Final chain complete at time: [1] "2024-08-03 17:40:20 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 17:40:20 BST"
+Starting lambda for epsilon:  1 
+Final lambda for epsilon:  38.3376 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:40:23 BST"
+Final chain complete at time: [1] "2024-08-03 17:42:27 BST"
+[1] "Collecting data from HMC output..."

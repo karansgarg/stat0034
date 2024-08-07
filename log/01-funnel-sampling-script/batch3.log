@@ -1,0 +1,48 @@
+Starting warmup at: [1] "2024-08-03 17:54:20 BST"
+Starting epsilon:  1 
+Final epsilon:  0.500965 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 17:54:28 BST"
+Final chain complete at time: [1] "2024-08-03 18:01:02 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 18:01:02 BST"
+Starting epsilon:  1 
+Final epsilon:  0.4529848 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 18:01:05 BST"
+Final chain complete at time: [1] "2024-08-03 18:08:17 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 18:08:17 BST"
+Starting epsilon:  1 
+Final epsilon:  0.512 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 18:08:17 BST"
+Final chain complete at time: [1] "2024-08-03 18:13:32 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 18:13:32 BST"
+Starting epsilon:  1 
+Final epsilon:  0.512 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 18:13:32 BST"
+Final chain complete at time: [1] "2024-08-03 18:18:36 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 18:18:36 BST"
+Starting epsilon:  1 
+Final epsilon:  0.09895605 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 18:18:47 BST"
+Final chain complete at time: [1] "2024-08-03 18:47:35 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 18:47:35 BST"
+Starting epsilon:  1 
+Final epsilon:  0.1342177 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 18:47:48 BST"
+Final chain complete at time: [1] "2024-08-03 19:10:08 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 19:10:08 BST"
+Starting epsilon:  1 
+Final epsilon:  0.1030792 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 19:10:20 BST"
+Final chain complete at time: [1] "2024-08-03 19:35:18 BST"
+[1] "Collecting data from HMC output..."
+Starting warmup at: [1] "2024-08-03 19:35:18 BST"
+Starting epsilon:  1 
+Final epsilon:  0.1677722 
+Warmup complete! Starting final chain at time: [1] "2024-08-03 19:35:22 BST"
+Final chain complete at time: [1] "2024-08-03 19:50:59 BST"
+[1] "Collecting data from HMC output..."

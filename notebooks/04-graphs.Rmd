@@ -1,0 +1,33 @@
+---
+title: "Producing Graphs for Final Plot"
+author: '23221812'
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup}
+source('/Users/karansgarg/Documents/MSc Statistics/STAT0034/Project/git/stat0034/src/utils.R') # Load utils functions
+setup() # Import relevant scripts
+seed() # Set seed
+```
+
+```{r funnel-density-plot}
+# Produce contour plot for funnel indicating density on x,y space (2D funnel)
+
+# Sample from funnel
+funnel_samples <- funnel_sampler(n=1000000, d=2) %>% data.frame()
+colnames(funnel_samples) <- c('y', 'x')
+
+# Create plot object
+funnel_density_plot <- ggplot(data=funnel_samples[abs(funnel_samples[,'x'])<20,], mapping=aes(x=x,y=y)) + 
+  stat_density_2d(aes(fill=log(..level..)), geom='polygon', bins=30) +
+  scale_fill_viridis_c(name = "Log Density") +
+  xlim(-10, 10) +
+  ylim(-8, 5) +
+  labs(title="Title",
+       x="X title",
+       y="Y title")
+
+funnel_density_plot
+```
+

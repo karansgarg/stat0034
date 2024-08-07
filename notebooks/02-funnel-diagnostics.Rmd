@@ -330,4 +330,3 @@ hmc_fixed_k1 <- HMC(U=funnel_U, grad_U=funnel_grad_U,
                                      epsilon_params=c(rate=1),
                                      chain_length=500000)
 ```
-

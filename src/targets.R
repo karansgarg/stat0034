@@ -86,6 +86,7 @@ funnel_grad_U <- function(x){
 
 # Sampling from funnel distribution
 funnel_sampler <- function(n=1, d=10){
+  # Note the first column is always y
   samples <- matrix(NA, nrow=n, ncol=d)
   for(i in 1:n){
     samples[i,1] <- rnorm(1, mean=0, sd=3)

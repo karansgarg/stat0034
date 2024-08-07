@@ -42,11 +42,16 @@ collect_data <- function(hmc_output){
   # Store output into single matrix
   data <- cbind(hmc_output$chain,
                 hmc_output$acceptance,
-                hmc_output$divergence)
+                hmc_output$divergences)
   # Add U-turn-length if GIST sampler used
   if(any(!is.na(hmc_output$U_turn_length))){
     data <- cbind(data, hmc_output$U_turn_length)
   }
+  
+  print("Collecting data from HMC output...")
+  
+  # Convert to data frame
+  data <- data.frame(data)
   
   # Extract dimension of target distribution
   d <- ncol(hmc_output$chain)
@@ -54,15 +59,17 @@ collect_data <- function(hmc_output){
   # Name columns
   for(i in 1:d){
     name <- paste0("dim", i)
-    colnames(data)[i] <- name
+    colnames(data)[i] <- c(name)
   }
+
   colnames(data)[d+1] <- "acceptance"
-  colnames(data[d+2] <- "divergence")
+  colnames(data)[d+2] <- "divergence"
   # Add U-turn-length if GIST sampler used
   if(any(!is.na(hmc_output$U_turn_length))){
     colnames(data)[d+3] <- "U_turn_length"
   }
   
+  print("Data collection complete!")
   return(data)
 }
 
@@ -82,12 +89,31 @@ accept_diverge_stats <- function(hmc_output_data){
 ################################################################################
 # Compute rolling bias of MCMC estimates
 ################################################################################
-rolling_bias <- function(samples_vector, true_mean, true_sd){
+# rolling_bias_old <- function(samples_vector, true_mean=0, true_sd=3){
+#   bias_vector <- rep(NA, length(samples_vector))
+#   for(i in 1:length(samples_vector)){
+#     bias_vector[i] <- mean(samples_vector[1:i])
+#   }
+#   bias_vector <- abs(bias_vector - true_mean) / true_sd
+#   return(bias_vector)
+# }
+
+rolling_bias <- function(samples_vector, true_mean=0){
   bias_vector <- rep(NA, length(samples_vector))
   for(i in 1:length(samples_vector)){
     bias_vector[i] <- mean(samples_vector[1:i])
   }
-  bias_vector <- abs(bias_vector - true_mean) / true_sd
+  bias_vector <- abs(bias_vector - true_mean)
+  return(bias_vector)
+}
+
+rolling_bias_sq <- function(samples_vector, true_mean=0, true_sd=3){
+  bias_vector <- rep(NA, length(samples_vector))
+  samples_vector <- samples_vector^2
+  for(i in 1:length(samples_vector)){
+    bias_vector[i] <- mean(samples_vector[1:i])
+  }
+  bias_vector <- abs(bias_vector - (true_sd^2 + true_mean^2))
   return(bias_vector)
 }
 

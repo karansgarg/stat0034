@@ -50,15 +50,16 @@ leapfrog_fixed_L <- function(q, # Position variables
   # Negate momentum to get symmetric proposal
   p <- -p
   
+  # Indicate divergence reached if Inf/Nan value seen
+  if(any(is.na(c(q, p, U(q), K(p)))) | 
+     any(is.infinite(c(q, p, U(q), K(p))))){divergence <- 1}
+  
   # Indicate divergence if difference in Hamiltonians exceeds threshold
-  if(!is.null(divergence_limit)){
+  if(!is.null(divergence_limit) & divergence==0){
     if(abs(U(current_q) + K(current_p) - U(q) - K(p)) > divergence_limit){
       divergence <- 1
     }
   }
-  
-  # Indicate divergence reached if Inf/Nan value seen
-  if(any(is.na(c(q, p))) | any(is.infinite(c(q, p)))){divergence <- 1}
   
   # Return q and p
   return(list(q=q,
@@ -233,9 +234,10 @@ HMC <- function(U, # Potential energy
   # L_max=1000, # Maximum path length to limit algorithm runtime
   # divergence_limit=NULL, # Defines limit in Hamiltonian differences allowed
   
-  # Supply default missing arguments if not given
-  #if(missing(L_max)){L_max <- 1000}
-  #if(missing(divergence_limit)){divergence_limit <- NULL}
+  # Extract additional supplied parameters to pass to function
+  args <- list(...)
+  L_max <- args$L_max
+  divergence_limit <- args$divergence_limit
   
   # Extract dimensionality of target
   d <- length(current_q)
@@ -285,7 +287,8 @@ HMC <- function(U, # Potential energy
                                         grad_U=grad_U,
                                         grad_K=grad_K,
                                         epsilon=epsilon,
-                                        ...)
+                                        L_max=L_max,
+                                        divergence_limit=divergence_limit)
       q <- proposal_results$q
       p <- proposal_results$p
       prob_L <- proposal_results$prob_L
@@ -303,7 +306,7 @@ HMC <- function(U, # Potential energy
                                            grad_K=grad_K,
                                            epsilon=epsilon,
                                            L=L,
-                                           ...)
+                                           divergence_limit=divergence_limit)
       q <- proposal_results$q
       p <- proposal_results$p
       divergences[t] <- proposal_results$divergence
@@ -371,7 +374,7 @@ HMC <- function(U, # Potential energy
   return(list(chain=chain,
               acceptance=acceptance,
               divergences=divergences,
-              U_turn_length=N_store,))
+              U_turn_length=N_store))
 }
 
 ################################################################################
@@ -384,8 +387,24 @@ HMC_with_warmup <- function(warmup_batch_length=500, # Length of each warmup bat
                             tolerance=0.025,
                             ...){
   
+  # Extract parameters needed for function
+  args <- list(...)
+  U <- args$U
+  grad_U <- args$grad_U
+  K <- args$K
+  current_q <- args$current_q
+  L <- args$L
+  L_max <- args$L_max
+  epsilon <- args$epsilon
+  epsilon_dist <- args$epsilon_dist
+  epsilon_params <- args$epsilon_params
+  chain_length <- args$chain_length
+  divergence_auto_reject <- args$divergence_auto_reject
+  divergence_limit <- args$divergence_limit
+  
   # Print start time
-  cat("Starting warmup at: ", Sys.time(), "\n")
+  cat("Starting warmup at: ")
+  print(Sys.time())
   
   # Extract parameters for adjustment
   if(!is.null(epsilon_dist)){
@@ -406,19 +425,28 @@ HMC_with_warmup <- function(warmup_batch_length=500, # Length of each warmup bat
     results <- HMC(U=U,
                    grad_U=grad_U,
                    K=K,
-                   current_q=q, 
-                   ...)
+                   current_q=q,
+                   L=L,
+                   divergence_auto_reject=divergence_auto_reject,
+                   epsilon=epsilon,
+                   epsilon_dist=epsilon_dist,
+                   epsilon_params=epsilon_params,
+                   chain_length=warmup_batch_length,
+                   L_max=L_max,
+                   divergence_limit=divergence_limit)
+    
+    a_rate <- mean(results$acceptance)
     
     # Check if epsilon distribution is supplied or if epsilon is supplied
     if(!is.null(epsilon_dist)){
       
       # If epsilon distribution is exponential, we update rate parameter (lambda)
       if(epsilon_dist=='exponential'){
-        if(results$a_rate - target_a_rate < -tolerance){
+        if(a_rate - target_a_rate < -tolerance){
           # Increase lambda (decrease mean epsilon) if not accepting enough
           rate <- rate * 1.2
         }
-        else if(results$a_rate - target_a_rate > tolerance){
+        else if(a_rate - target_a_rate > tolerance){
           # Decrease lambda (increase mean epsilon) if not accepting enough
           rate <- rate * 0.8
         }
@@ -427,11 +455,11 @@ HMC_with_warmup <- function(warmup_batch_length=500, # Length of each warmup bat
     }
     # If epsilon distribution is null we update epsilon directly
     else{
-      if(results$a_rate - target_a_rate < -tolerance){
+      if(a_rate - target_a_rate < -tolerance){
         # Decrease epsilon if not accepting enough
         epsilon <- epsilon * 0.8
       }
-      else if(results$a_rate - target_a_rate > tolerance){
+      else if(a_rate - target_a_rate > tolerance){
         # Increase epsilon if not accepting enough
         epsilon <- epsilon * 1.2
       }
@@ -454,17 +482,26 @@ HMC_with_warmup <- function(warmup_batch_length=500, # Length of each warmup bat
   }
   
   # Print time when starting final chain
-  cat("Warmup complete! Starting final chain at time: ", Sys.time(), "\n")
+  cat("Warmup complete! Starting final chain at time: ")
+  print(Sys.time())
   
   # Run HMC with tuned parameters for epsilon
-  results <- HMC(U=U, grad_U=grad_U, K=K, current_q=q, 
-                 L=L, L_max=L_max, divergence_auto_reject=divergence_auto_reject,
-                 stan_divergence=stan_divergence, epsilon=epsilon, 
+  results <- HMC(U=U,
+                 grad_U=grad_U,
+                 K=K,
+                 current_q=q,
+                 L=L,
+                 divergence_auto_reject=divergence_auto_reject,
+                 epsilon=epsilon,
                  epsilon_dist=epsilon_dist,
-                 epsilon_params=epsilon_params, chain_length=chain_length)
+                 epsilon_params=epsilon_params,
+                 chain_length=chain_length,
+                 L_max=L_max,
+                 divergence_limit=divergence_limit)
   
   # Print time when final chain complete
-  cat("Final chain complete at time: ", Sys.time(), "\n")
+  cat("Final chain complete at time: ")
+  print(Sys.time())
   
   return(results)
 }
