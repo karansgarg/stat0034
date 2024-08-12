@@ -5,6 +5,7 @@
 # Imports
 ################################################################################
 library(VGAM) # For drawing samples from Laplace distribution
+library(HyperbolicDist) # For using hyperbolic distribution sampler
 
 ################################################################################
 # Leapfrog integrators for HMC sampler
@@ -275,6 +276,13 @@ HMC <- function(U, # Potential energy
     sample_p <- function(x){return(rlaplace(x))}
     K <- function(x){return(sum(abs(x)))}
     grad_K <- function(x){return(sign(x))}
+  }
+  else if(K == 'hyperbolic'){
+    # Convert to parameterisation required by HyperbolicDist package
+    k_params <- hyperbChangePars(from=2, to=1, Theta=c(1, 0, 1, 0))
+    sample_p <- function(x){return(rhyperb(x, Theta=k_params))}
+    K <- function(x){return(sum(sqrt(1+x^2)))}
+    grad_K <- function(x){return(x/(sqrt(1+x^2)))}
   }
   
   # Perform HMC steps in loop to generate chain
