@@ -108,7 +108,15 @@ leapfrog_GIST <- function(q, # Position variables
     # Indicate divergence if difference in Hamiltonians exceeds threshold
     if(!is.null(divergence_limit)){
       H_t <- U(q) + K(p)
-      if(abs(H_t - H_0) > divergence_limit){
+      # If Hamiltonian has diverged to inf then we stop as its a divergence anyway
+      if(!is.nan(H_t) & !is.infinite(H_t)){
+        if(abs(H_t - H_0) > divergence_limit){
+          u_turn_condition <- TRUE
+          divergence <- 1
+          break
+        }
+      }
+      else{
         u_turn_condition <- TRUE
         divergence <- 1
         break
@@ -173,7 +181,16 @@ leapfrog_GIST <- function(q, # Position variables
       # Indicate divergence if difference in Hamiltonians exceeds threshold
       if(!is.null(divergence_limit)){
         H_t <- U(q) + K(p)
-        if(abs(H_t - H_0) > divergence_limit){
+        # If Hamiltonian has diverged to inf then we stop as its a divergence anyway
+        if(!is.nan(H_t) & !is.infinite(H_t)){
+          if(abs(H_t - H_0) > divergence_limit){
+            u_turn_condition <- TRUE
+            divergence <- 1
+            break
+          }
+        }
+        else{
+          u_turn_condition <- TRUE
           divergence <- 1
           break
         }
