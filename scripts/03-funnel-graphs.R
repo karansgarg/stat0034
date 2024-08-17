@@ -11,17 +11,39 @@ setup() # Import relevant scripts
 ################################################################################
 # Import data
 ################################################################################
-# Not needed at the moment since all data is still in memory - need to add later
-# so that scripts can be run top to tail from a fresh R session with no dependency
+# Define the folder path containing sampling data
+data_folder <- "./out/samples/"
 
-y_rolling_bias <- `02-funnel-diagnostics_results`$y_rolling_bias
-y_rolling_bias_sq <- `02-funnel-diagnostics_results`$y_rolling_bias_sq
+# Get a list of all CSV files in the folder
+csv_files <- list.files(path = data_folder, pattern = "*.csv", full.names = TRUE)
 
-stan_rolling_bias <- read_csv(file='./out/diagnostics/rolling_bias/stan.csv') %>% data.frame
-stan_rolling_bias <- stan_rolling_bias$x
+# Initialize an empty list to store dataframes
+sampling_data <- list()
 
-stan_rolling_bias_sq <- read_csv(file='./out/diagnostics/rolling_bias_sq/stan.csv') %>% data.frame
-stan_rolling_bias_sq <- stan_rolling_bias_sq$x
+# Loop over the files and read them into dataframes
+for (file in csv_files) {
+  
+  # Extract the filename without extension
+  file_name <- tools::file_path_sans_ext(basename(file))
+  
+  # Read the CSV file into a dataframe
+  data <- read_csv(file) %>% data.frame()
+  
+  # Store the dataframe in the list with the filename as the list item name
+  sampling_data[[file_name]] <- data
+}
+
+# Extract y samples
+y_data <- lapply(sampling_data, function(sampled_data_df){return(sampled_data_df[,1])})
+
+#y_rolling_bias <- `02-funnel-diagnostics_results`$y_rolling_bias
+#y_rolling_bias_sq <- `02-funnel-diagnostics_results`$y_rolling_bias_sq
+
+#stan_rolling_bias <- read_csv(file='./out/diagnostics/rolling_bias/stan.csv') %>% data.frame
+#stan_rolling_bias <- stan_rolling_bias$x
+
+#stan_rolling_bias_sq <- read_csv(file='./out/diagnostics/rolling_bias_sq/stan.csv') %>% data.frame
+#stan_rolling_bias_sq <- stan_rolling_bias_sq$x
 ################################################################################
 # Graph histogram of y samples
 ################################################################################
