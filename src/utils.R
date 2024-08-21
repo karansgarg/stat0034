@@ -29,3 +29,31 @@ seed <- function(){
 # Euclidean norm (for assessing tail behaviour)
 ################################################################################
 norm <- function(x){return(sqrt(sum(x^2)))}
+
+################################################################################
+# Import data
+################################################################################
+
+import_data <- function(folder_path="./out/samples/"){
+  
+  # Get a list of all CSV files in the folder
+  csv_files <- list.files(path = folder_path, pattern = "*.csv", full.names = TRUE)
+  
+  # Initialize an empty list to store dataframes
+  data_list <- list()
+  
+  # Loop over the files and read them into dataframes
+  for (file in csv_files) {
+    
+    # Extract the filename without extension
+    file_name <- tools::file_path_sans_ext(basename(file))
+    
+    # Read the CSV file into a dataframe
+    data <- read_csv(file) %>% data.frame()
+    
+    # Store the dataframe in the list with the filename as the list item name
+    data_list[[file_name]] <- data
+  }
+  
+  return(data_list)
+}

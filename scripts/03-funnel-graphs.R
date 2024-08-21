@@ -11,39 +11,14 @@ setup() # Import relevant scripts
 ################################################################################
 # Import data
 ################################################################################
-# Define the folder path containing sampling data
-data_folder <- "./out/samples/"
-
-# Get a list of all CSV files in the folder
-csv_files <- list.files(path = data_folder, pattern = "*.csv", full.names = TRUE)
-
-# Initialize an empty list to store dataframes
-sampling_data <- list()
-
-# Loop over the files and read them into dataframes
-for (file in csv_files) {
-  
-  # Extract the filename without extension
-  file_name <- tools::file_path_sans_ext(basename(file))
-  
-  # Read the CSV file into a dataframe
-  data <- read_csv(file) %>% data.frame()
-  
-  # Store the dataframe in the list with the filename as the list item name
-  sampling_data[[file_name]] <- data
-}
+# Import sampling results
+sampling_data <- import_data()
 
 # Extract y samples
 y_data <- lapply(sampling_data, function(sampled_data_df){return(sampled_data_df[,1])})
 
-#y_rolling_bias <- `02-funnel-diagnostics_results`$y_rolling_bias
-#y_rolling_bias_sq <- `02-funnel-diagnostics_results`$y_rolling_bias_sq
-
-#stan_rolling_bias <- read_csv(file='./out/diagnostics/rolling_bias/stan.csv') %>% data.frame
-#stan_rolling_bias <- stan_rolling_bias$x
-
-#stan_rolling_bias_sq <- read_csv(file='./out/diagnostics/rolling_bias_sq/stan.csv') %>% data.frame
-#stan_rolling_bias_sq <- stan_rolling_bias_sq$x
+# Import rolling bias data
+y_rolling_bias <- import_data('./out/diagnostics/rolling_bias/')
 ################################################################################
 # Graph histogram of y samples
 ################################################################################
@@ -68,12 +43,21 @@ for(name in names(y_data)){
 }
 
 # Create histogram for Stan samples
-png(filename='./out/graphics/histograms/stan.png')
-hist(stan_samples, freq = F, breaks=100, xlim=c(-10,10), ylim=c(0, 0.15),
-     xlab="y", ylab="Density", main="", 
-     cex.axis = 1.3, cex.lab = 1.3)
-curve(funnel_y_density, from=-10, to=10, add=T, col='red', lwd=2)
-dev.off()
+#png(filename='./out/graphics/histograms/stan.png')
+#hist(stan_samples, freq = F, breaks=100, xlim=c(-10,10), ylim=c(0, 0.15),
+#     xlab="y", ylab="Density", main="", 
+#     cex.axis = 1.3, cex.lab = 1.3)
+#curve(funnel_y_density, from=-10, to=10, add=T, col='red', lwd=2)
+#dev.off()
+
+################################################################################
+# QQ plots comparing y sampling
+################################################################################
+
+# Compare different kinetic energies
+
+# Compare different choice of L and epsilon (for Gaussian KE)
+
 ################################################################################
 # Graph rolling bias
 ################################################################################
@@ -211,124 +195,124 @@ dev.off()
 ################################################################################
 
 # Plots for HMC, fixedE, k1
-png(filename='./out/graphics/rolling_bias_sq/hmc_fixedE_k1.png')
-plot(y_rolling_bias_sq$hmc_fixedE_k1_div_mouth, type='l', ylim=c(0,5),
-     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
-     cex.axis=1.3, cex.lab=1.3)
-lines(y_rolling_bias_sq$hmc_fixedE_k1_div_neck, col='blue')
-lines(y_rolling_bias_sq$hmc_fixedE_k1_nodiv_mouth, col='green')
-lines(y_rolling_bias_sq$hmc_fixedE_k1_nodiv_neck, col='red')
-legend('topright', legend=c('Div limit, start in mouth',
-                            'Div limit, start in neck',
-                            'No div limit, start in mouth',
-                            'No div limit, start in neck'),
-       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
-dev.off()
+#png(filename='./out/graphics/rolling_bias_sq/hmc_fixedE_k1.png')
+#plot(y_rolling_bias_sq$hmc_fixedE_k1_div_mouth, type='l', ylim=c(0,5),
+#     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
+#     cex.axis=1.3, cex.lab=1.3)
+#lines(y_rolling_bias_sq$hmc_fixedE_k1_div_neck, col='blue')
+#lines(y_rolling_bias_sq$hmc_fixedE_k1_nodiv_mouth, col='green')
+#lines(y_rolling_bias_sq$hmc_fixedE_k1_nodiv_neck, col='red')
+#legend('topright', legend=c('Div limit, start in mouth',
+#                            'Div limit, start in neck',
+#                            'No div limit, start in mouth',
+#                            'No div limit, start in neck'),
+#       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
+#dev.off()
 
 # Plots for HMC, randomE, k1
-png(filename='./out/graphics/rolling_bias_sq/hmc_randomE_k1.png')
-plot(y_rolling_bias_sq$hmc_randomE_k1_div_mouth, type='l', ylim=c(0,5),
-     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
-     cex.axis=1.3, cex.lab=1.3)
-lines(y_rolling_bias_sq$hmc_randomE_k1_div_neck, col='blue')
-lines(y_rolling_bias_sq$hmc_randomE_k1_nodiv_mouth, col='green')
-lines(y_rolling_bias_sq$hmc_randomE_k1_nodiv_neck, col='red')
-legend('topright', legend=c('Div limit, start in mouth',
-                            'Div limit, start in neck',
-                            'No div limit, start in mouth',
-                            'No div limit, start in neck'),
-       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
-dev.off()
+#png(filename='./out/graphics/rolling_bias_sq/hmc_randomE_k1.png')
+#plot(y_rolling_bias_sq$hmc_randomE_k1_div_mouth, type='l', ylim=c(0,5),
+#     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
+#     cex.axis=1.3, cex.lab=1.3)
+#lines(y_rolling_bias_sq$hmc_randomE_k1_div_neck, col='blue')
+#lines(y_rolling_bias_sq$hmc_randomE_k1_nodiv_mouth, col='green')
+#lines(y_rolling_bias_sq$hmc_randomE_k1_nodiv_neck, col='red')
+#legend('topright', legend=c('Div limit, start in mouth',
+#                            'Div limit, start in neck',
+#                            'No div limit, start in mouth',
+#                            'No div limit, start in neck'),
+#       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
+#dev.off()
 
 # Plots for HMC, fixedE, k2
-png(filename='./out/graphics/rolling_bias_sq/hmc_fixedE_k2.png')
-plot(y_rolling_bias_sq$hmc_fixedE_k2_div_mouth, type='l', ylim=c(0,5),
-     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
-     cex.axis=1.3, cex.lab=1.3)
-lines(y_rolling_bias_sq$hmc_fixedE_k2_div_neck, col='blue')
-lines(y_rolling_bias_sq$hmc_fixedE_k2_nodiv_mouth, col='green')
-lines(y_rolling_bias_sq$hmc_fixedE_k2_nodiv_neck, col='red')
-legend('topright', legend=c('Div limit, start in mouth',
-                            'Div limit, start in neck',
-                            'No div limit, start in mouth',
-                            'No div limit, start in neck'),
-       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
-dev.off()
+#png(filename='./out/graphics/rolling_bias_sq/hmc_fixedE_k2.png')
+#plot(y_rolling_bias_sq$hmc_fixedE_k2_div_mouth, type='l', ylim=c(0,5),
+#     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
+#     cex.axis=1.3, cex.lab=1.3)
+#lines(y_rolling_bias_sq$hmc_fixedE_k2_div_neck, col='blue')
+#lines(y_rolling_bias_sq$hmc_fixedE_k2_nodiv_mouth, col='green')
+#lines(y_rolling_bias_sq$hmc_fixedE_k2_nodiv_neck, col='red')
+#legend('topright', legend=c('Div limit, start in mouth',
+#                            'Div limit, start in neck',
+#                            'No div limit, start in mouth',
+#                            'No div limit, start in neck'),
+#       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
+#dev.off()
 
 # Plots for HMC, randomE, k2
-png(filename='./out/graphics/rolling_bias_sq/hmc_randomE_k2.png')
-plot(y_rolling_bias_sq$hmc_randomE_k2_div_mouth, type='l', ylim=c(0,5),
-     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
-     cex.axis=1.3, cex.lab=1.3)
-lines(y_rolling_bias_sq$hmc_randomE_k2_div_neck, col='blue')
-lines(y_rolling_bias_sq$hmc_randomE_k2_nodiv_mouth, col='green')
-lines(y_rolling_bias_sq$hmc_randomE_k2_nodiv_neck, col='red')
-legend('topright', legend=c('Div limit, start in mouth',
-                            'Div limit, start in neck',
-                            'No div limit, start in mouth',
-                            'No div limit, start in neck'),
-       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
-dev.off()
+#png(filename='./out/graphics/rolling_bias_sq/hmc_randomE_k2.png')
+#plot(y_rolling_bias_sq$hmc_randomE_k2_div_mouth, type='l', ylim=c(0,5),
+#     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
+#     cex.axis=1.3, cex.lab=1.3)
+#lines(y_rolling_bias_sq$hmc_randomE_k2_div_neck, col='blue')
+#lines(y_rolling_bias_sq$hmc_randomE_k2_nodiv_mouth, col='green')
+#lines(y_rolling_bias_sq$hmc_randomE_k2_nodiv_neck, col='red')
+#legend('topright', legend=c('Div limit, start in mouth',
+#                            'Div limit, start in neck',
+#                            'No div limit, start in mouth',
+#                            'No div limit, start in neck'),
+#       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
+#dev.off()
 
 # Plots for GIST, fixedE, k1
-png(filename='./out/graphics/rolling_bias_sq/gist_fixedE_k1.png')
-plot(y_rolling_bias_sq$gist_fixedE_k1_div_mouth, type='l', ylim=c(0,5),
-     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
-     cex.axis=1.3, cex.lab=1.3)
-lines(y_rolling_bias_sq$gist_fixedE_k1_div_neck, col='blue')
-lines(y_rolling_bias_sq$gist_fixedE_k1_nodiv_mouth, col='green')
-lines(y_rolling_bias_sq$gist_fixedE_k1_nodiv_neck, col='red')
-legend('topright', legend=c('Div limit, start in mouth',
-                            'Div limit, start in neck',
-                            'No div limit, start in mouth',
-                            'No div limit, start in neck'),
-       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
-dev.off()
+#png(filename='./out/graphics/rolling_bias_sq/gist_fixedE_k1.png')
+#plot(y_rolling_bias_sq$gist_fixedE_k1_div_mouth, type='l', ylim=c(0,5),
+#     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
+#     cex.axis=1.3, cex.lab=1.3)
+#lines(y_rolling_bias_sq$gist_fixedE_k1_div_neck, col='blue')
+#lines(y_rolling_bias_sq$gist_fixedE_k1_nodiv_mouth, col='green')
+#lines(y_rolling_bias_sq$gist_fixedE_k1_nodiv_neck, col='red')
+#legend('topright', legend=c('Div limit, start in mouth',
+#                            'Div limit, start in neck',
+#                            'No div limit, start in mouth',
+#                            'No div limit, start in neck'),
+#       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
+#dev.off()
 
 # Plots for GIST, randomE, k1
-png(filename='./out/graphics/rolling_bias_sq/gist_randomE_k1.png')
-plot(y_rolling_bias_sq$gist_randomE_k1_div_mouth, type='l', ylim=c(0,5),
-     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
-     cex.axis=1.3, cex.lab=1.3)
-lines(y_rolling_bias_sq$gist_randomE_k1_div_neck, col='blue')
-lines(y_rolling_bias_sq$gist_randomE_k1_nodiv_mouth, col='green')
-lines(y_rolling_bias_sq$gist_randomE_k1_nodiv_neck, col='red')
-legend('topright', legend=c('Div limit, start in mouth',
-                            'Div limit, start in neck',
-                            'No div limit, start in mouth',
-                            'No div limit, start in neck'),
-       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
-dev.off()
+#png(filename='./out/graphics/rolling_bias_sq/gist_randomE_k1.png')
+#plot(y_rolling_bias_sq$gist_randomE_k1_div_mouth, type='l', ylim=c(0,5),
+#     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
+#     cex.axis=1.3, cex.lab=1.3)
+#lines(y_rolling_bias_sq$gist_randomE_k1_div_neck, col='blue')
+#lines(y_rolling_bias_sq$gist_randomE_k1_nodiv_mouth, col='green')
+#lines(y_rolling_bias_sq$gist_randomE_k1_nodiv_neck, col='red')
+#legend('topright', legend=c('Div limit, start in mouth',
+#                            'Div limit, start in neck',
+#                            'No div limit, start in mouth',
+#                            'No div limit, start in neck'),
+#       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
+#dev.off()
 
 # Plots for GIST, fixedE, k2
-png(filename='./out/graphics/rolling_bias_sq/gist_fixedE_k2.png')
-plot(y_rolling_bias_sq$gist_fixedE_k2_div_mouth, type='l', ylim=c(0,5),
-     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
-     cex.axis=1.3, cex.lab=1.3)
-lines(y_rolling_bias_sq$gist_fixedE_k2_div_neck, col='blue')
-lines(y_rolling_bias_sq$gist_fixedE_k2_nodiv_mouth, col='green')
-lines(y_rolling_bias_sq$gist_fixedE_k2_nodiv_neck, col='red')
-legend('topright', legend=c('Div limit, start in mouth',
-                            'Div limit, start in neck',
-                            'No div limit, start in mouth',
-                            'No div limit, start in neck'),
-       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
-dev.off()
+#png(filename='./out/graphics/rolling_bias_sq/gist_fixedE_k2.png')
+#plot(y_rolling_bias_sq$gist_fixedE_k2_div_mouth, type='l', ylim=c(0,5),
+#     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
+#     cex.axis=1.3, cex.lab=1.3)
+#lines(y_rolling_bias_sq$gist_fixedE_k2_div_neck, col='blue')
+#lines(y_rolling_bias_sq$gist_fixedE_k2_nodiv_mouth, col='green')
+#lines(y_rolling_bias_sq$gist_fixedE_k2_nodiv_neck, col='red')
+#legend('topright', legend=c('Div limit, start in mouth',
+#                            'Div limit, start in neck',
+#                            'No div limit, start in mouth',
+#                            'No div limit, start in neck'),
+#       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
+#dev.off()
 
 # Plots for GIST, randomE, k2
-png(filename='./out/graphics/rolling_bias_sq/gist_randomE_k2.png')
-plot(y_rolling_bias_sq$gist_randomE_k2_div_mouth, type='l', ylim=c(0,5),
-     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
-     cex.axis=1.3, cex.lab=1.3)
-lines(y_rolling_bias_sq$gist_randomE_k2_div_neck, col='blue')
-lines(y_rolling_bias_sq$gist_randomE_k2_nodiv_mouth, col='green')
-lines(y_rolling_bias_sq$gist_randomE_k2_nodiv_neck, col='red')
-legend('topright', legend=c('Div limit, start in mouth',
-                            'Div limit, start in neck',
-                            'No div limit, start in mouth',
-                            'No div limit, start in neck'),
-       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
-dev.off()
+#png(filename='./out/graphics/rolling_bias_sq/gist_randomE_k2.png')
+#plot(y_rolling_bias_sq$gist_randomE_k2_div_mouth, type='l', ylim=c(0,5),
+#     xlab='Number of Iterations', ylab='Absolute Error of MCMC Estimators',
+#     cex.axis=1.3, cex.lab=1.3)
+#lines(y_rolling_bias_sq$gist_randomE_k2_div_neck, col='blue')
+#lines(y_rolling_bias_sq$gist_randomE_k2_nodiv_mouth, col='green')
+#lines(y_rolling_bias_sq$gist_randomE_k2_nodiv_neck, col='red')
+#legend('topright', legend=c('Div limit, start in mouth',
+#                            'Div limit, start in neck',
+#                            'No div limit, start in mouth',
+#                            'No div limit, start in neck'),
+#       col=c('black', 'blue', 'green', 'red'), pch=16, cex=1.5)
+#dev.off()
 
 ################################################################################
 # Print acceptance divergence statistics
