@@ -24,3 +24,8 @@ seed <- function(){
   # Set desired seed
   set.seed(06031953)
 }
+
+################################################################################
+# Euclidean norm (for assessing tail behaviour)
+################################################################################
+norm <- function(x){return(sqrt(sum(x^2)))}
