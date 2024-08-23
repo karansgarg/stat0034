@@ -116,7 +116,3 @@ rolling_bias_sq <- function(samples_vector, true_mean=0, true_sd=3){
   bias_vector <- abs(bias_vector - (true_sd^2 + true_mean^2))
   return(bias_vector)
 }
-
-################################################################################
-# Plot rolling bias
-################################################################################
