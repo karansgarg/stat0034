@@ -58,6 +58,13 @@ for(name in names(y_data)){
 ################################################################################
 # QQ plots comparing y sampling (GIST/RHMC comparisons)
 ################################################################################
+# Overall settings for QQ plots
+# Set colours for lines
+qq_colors <- c("Fixed path length and step size" = "black",
+                   "Fixed path length, random step size" = "blue",
+                   "GIST, fixed step size" = "green",
+                   "GIST, random step size" = "red")
+
 
 ######## k1-div-neck (Comparing step size and L choices, 4 lines total) ########
 # Combine vectors into a dataframe
@@ -75,6 +82,7 @@ k1_div_neck_samples <- data.frame(sample = c(y_data$hmc_fixedE_k1_div_neck,
 k1_div_neck_qq_plot <- ggplot(k1_div_neck_samples, aes(sample = sample, color = group)) +
   stat_qq(distribution = qnorm, dparams = list(mean = 0, sd = 3)) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
+  scale_color_manual(values = qq_colors) +
   labs(title = "", x = "Theoretical Quantiles", y = "Sample Quantiles") +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom") +
@@ -100,6 +108,7 @@ k1_nodiv_neck_samples <- data.frame(sample = c(y_data$hmc_fixedE_k1_nodiv_neck,
 k1_nodiv_neck_qq_plot <- ggplot(k1_nodiv_neck_samples, aes(sample = sample, color = group)) +
   stat_qq(distribution = qnorm, dparams = list(mean = 0, sd = 3)) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
+  scale_color_manual(values = qq_colors) +
   labs(title = "", x = "Theoretical Quantiles", y = "Sample Quantiles") +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom") +
@@ -125,6 +134,7 @@ k2_div_neck_samples <- data.frame(sample = c(y_data$hmc_fixedE_k2_div_neck,
 k2_div_neck_qq_plot <- ggplot(k2_div_neck_samples, aes(sample = sample, color = group)) +
   stat_qq(distribution = qnorm, dparams = list(mean = 0, sd = 3)) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
+  scale_color_manual(values = qq_colors) +
   labs(title = "", x = "Theoretical Quantiles", y = "Sample Quantiles") +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom") +
@@ -150,6 +160,7 @@ k3_div_neck_samples <- data.frame(sample = c(y_data$hmc_fixedE_k3_div_neck,
 k3_div_neck_qq_plot <- ggplot(k3_div_neck_samples, aes(sample = sample, color = group)) +
   stat_qq(distribution = qnorm, dparams = list(mean = 0, sd = 3)) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
+  scale_color_manual(values = qq_colors) +
   labs(title = "", x = "Theoretical Quantiles", y = "Sample Quantiles") +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom") +
@@ -162,6 +173,10 @@ ggsave(filename='k3_div_neck.png', path='./out/graphics/qq_plots/', width=9, hei
 ################################################################################
 # QQ plots comparing y sampling (KE comparisons)
 ################################################################################
+# Set colours for lines
+qq_colors_ke <- c("Gaussian" = "black",
+               "Laplace" = "green",
+               "Hyperbolic" = "red")
 
 ############## hmc-fixedE-div-neck (Comparing KEs, 3 lines total) ##############
 # Combine vectors into a dataframe
@@ -178,6 +193,7 @@ hmc_fixedE_div_neck_qq_plot <- ggplot(hmc_fixedE_div_neck_samples,
                                       aes(sample = sample, color = group)) +
   stat_qq(distribution = qnorm, dparams = list(mean = 0, sd = 3)) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
+  scale_color_manual(values = qq_colors_ke) +
   labs(title = "", x = "Theoretical Quantiles", y = "Sample Quantiles") +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom") +
@@ -203,6 +219,7 @@ hmc_randomE_div_neck_qq_plot <- ggplot(hmc_randomE_div_neck_samples,
                                       aes(sample = sample, color = group)) +
   stat_qq(distribution = qnorm, dparams = list(mean = 0, sd = 3)) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
+  scale_color_manual(values = qq_colors_ke) +
   labs(title = "", x = "Theoretical Quantiles", y = "Sample Quantiles") +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom") +
@@ -228,6 +245,7 @@ gist_fixedE_div_neck_qq_plot <- ggplot(gist_fixedE_div_neck_samples,
                                       aes(sample = sample, color = group)) +
   stat_qq(distribution = qnorm, dparams = list(mean = 0, sd = 3)) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
+  scale_color_manual(values = qq_colors_ke) +
   labs(title = "", x = "Theoretical Quantiles", y = "Sample Quantiles") +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom") +
@@ -253,6 +271,7 @@ gist_randomE_div_neck_qq_plot <- ggplot(gist_randomE_div_neck_samples,
                                        aes(sample = sample, color = group)) +
   stat_qq(distribution = qnorm, dparams = list(mean = 0, sd = 3)) +
   geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
+  scale_color_manual(values = qq_colors_ke) +
   labs(title = "", x = "Theoretical Quantiles", y = "Sample Quantiles") +
   theme_minimal() +
   theme(legend.title = element_blank(), legend.position = "bottom") +
