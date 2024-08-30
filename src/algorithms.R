@@ -97,9 +97,13 @@ leapfrog_GIST <- function(q, # Position variables
     L_max_forward <- L_max_forward + 1 # Add 1 timestep to counter
     
     # Perform leapfrog update for one timestep
-    p <- p - epsilon*grad_U(q)/2
+    # Compute grad_U if first step, otherwise use stored gradient to avoid
+    # calculating grad_U twice
+    if(L_max_forward==1){p <- p - epsilon*grad_U(q)/2}
+    else{p <- p - epsilon*grad_U_store/2}
     q <- q + epsilon*grad_K(p)
-    p <- p - epsilon*grad_U(q)/2
+    grad_U_store <- grad_U(q)
+    p <- p - epsilon*grad_U_store/2
     
     # Store updated results
     q_store <- rbind(q_store, q)
@@ -175,9 +179,13 @@ leapfrog_GIST <- function(q, # Position variables
       L_max_backward <- L_max_backward + 1 # Add 1 timestep to counter
       
       # Perform leapfrog update for one timestep
-      p <- p - epsilon*grad_U(q)/2
+      # Compute grad_U if first step, otherwise use stored gradient to avoid
+      # calculating grad_U twice
+      if(L_max_backward==1){p <- p - epsilon*grad_U(q)/2}
+      else{p <- p - epsilon*grad_U_store/2}
       q <- q + epsilon*grad_K(p)
-      p <- p - epsilon*grad_U(q)/2
+      grad_U_store <- grad_U(q)
+      p <- p - epsilon*grad_U_store/2
       
       # Indicate divergence if difference in Hamiltonians exceeds threshold
       if(!is.null(divergence_limit)){
